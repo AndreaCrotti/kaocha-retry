@@ -1,0 +1,7 @@
+#kaocha/v1
+{:plugins [:kaocha.plugin/retry]
+
+ :tests   [{:id         :unit
+            :test-paths ["test"]}]
+
+ }

@@ -1,0 +1,2 @@
+{:deps {kaocha-retry/kaocha-retry {:local/root "../"}
+        org.clojure/test.check    {:mvn/version "1.0.0"}}}

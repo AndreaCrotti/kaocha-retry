@@ -1,0 +1,1 @@
+{:deps {lambdaisland/kaocha {:mvn/version "1.0.732"}}}
