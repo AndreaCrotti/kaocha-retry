@@ -13,8 +13,14 @@
 (def current-retries (atom {}))
 (def report-history (atom []))
 (def to-report (atom nil))
+(def reported (atom #{}))
 
 (defplugin kaocha.plugin/retry
+  (pre-run [test-plan]
+    (reset! reported #{})
+    (reset! report-history [])
+    test-plan)
+
   (wrap-run [run test-plan]
     (fn [& args]
       (let [result
@@ -24,16 +30,16 @@
               (apply run args))]
 
         (doseq [{:keys [type] :as r} @report-history]
-          (if (= :pass type)
-            (te/report r)
-            (let [test-id (-> r :kaocha/testable :kaocha.testable/id)]
-              (println "test-id" test-id
-                       "current-retries" @current-retries)
-              (when (= max-retries (get @current-retries test-id))
-                (te/report r)))))
+          (let [test-id (-> r :kaocha/testable :kaocha.testable/id)]
+            (when-not (@reported test-id)
+              (swap! reported conj test-id)
+              (if (not= :fail type)
+                (te/report r)
+                (when (= max-retries (get @current-retries test-id))
+                  (te/report r))))))
         result)))
 
-  (post-test [test test-plan]
+  #_(post-test [test test-plan]
     (let [t-id (:kaocha.testable/id test)
           curr (get @current-retries t-id 0)]
       (when (and
