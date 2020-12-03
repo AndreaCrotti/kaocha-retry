@@ -1,7 +1,8 @@
 #kaocha/v1
-{:plugins [:kaocha.plugin/retry]
+{:plugins         [:kaocha.plugin/retry]
+ :capture-output? false
 
- :tests   [{:id         :unit
-            :test-paths ["test"]}]
+ :tests [{:id         :unit
+          :test-paths ["test"]}]
 
  }
