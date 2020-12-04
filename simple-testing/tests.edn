@@ -1,5 +1,5 @@
 #kaocha/v1
-{:plugins                             [:kaocha.plugin/retry]
+{:plugins                             [:retry.plugin/retry]
  :capture-output?                     false
 
  :tests [{:id         :unit
