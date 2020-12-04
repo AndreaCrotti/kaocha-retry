@@ -5,6 +5,7 @@
             [kaocha.plugin :refer [defplugin]]
             [kaocha.hierarchy :as h]))
 
+;; TODO: make these two configurable
 (def max-retries 3)
 (def wait-time 100)
 (def current-retries (atom {}))

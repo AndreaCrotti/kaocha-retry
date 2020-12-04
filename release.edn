@@ -1,0 +1,3 @@
+{:group-id "testing"
+ :artifact-id "kaocha-retry-plugin"
+ :scm-url "https://github.com/andreacrotti/kaocha-retry"}

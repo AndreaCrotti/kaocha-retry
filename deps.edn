@@ -1,1 +1,5 @@
-{:deps {lambdaisland/kaocha {:mvn/version "1.0.732"}}}
+{:deps {lambdaisland/kaocha {:mvn/version "1.0.732"}}
+ :aliases
+ {:release
+  {:extra-deps {applied-science/deps-library {:mvn/version "VERSION"}}
+   :main-opts ["-m" "applied-science.deps-library"]}}}
