@@ -35,17 +35,24 @@
               (recur (with-capture-report t)))))))))
 
 (defplugin kaocha.plugin/retry
+  (pre-run [test-plan]
+    (reset! current-retries {})
+    test-plan)
+
   (pre-test [testable test-plan]
-   (let [max-retries (::retry-max-tries test-plan 3)
-         wait-time (::retry-wait-time test-plan default-wait-time)
-         test-id (:kaocha.testable/id testable)]
-     (swap! current-retries assoc test-id 0)
-     (cond-> testable
-       (h/leaf? testable)
-       (-> (update :kaocha.testable/wrap
-                   conj
-                   (fn [t]
-                     (run-with-retry max-retries
-                                     wait-time
-                                     t
-                                     test-id))))))))
+    (let [max-retries (::retry-max-tries test-plan 3)
+          wait-time (::retry-wait-time test-plan default-wait-time)
+          test-id (:kaocha.testable/id testable)]
+
+      (if (h/leaf? testable)
+        (do
+          (swap! current-retries assoc test-id 0)
+          (-> (update testable
+                      :kaocha.testable/wrap
+                      conj
+                      (fn [t]
+                        (run-with-retry max-retries
+                                        wait-time
+                                        t
+                                        test-id)))))
+        testable))))
