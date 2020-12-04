@@ -15,6 +15,26 @@
                             (reset! to-report args))]
     (t)))
 
+(defn run-with-retry [t test-id]
+  (fn []
+    (loop [passed? (with-capture-report t)]
+      (let [attempts (get @current-retries test-id)]
+        (if passed?
+          (do (apply te/report @to-report)
+              true)
+          (if (= attempts max-retries)
+            (do
+              (apply te/report @to-report)
+              false)
+            (do
+              (Thread/sleep wait-time)
+              (swap! current-retries
+                     assoc
+                     test-id
+                     (inc attempts))
+
+              (recur (with-capture-report t)))))))))
+
 (defplugin kaocha.plugin/retry
   (pre-test [testable test-plan]
     (let [test-id (-> testable :kaocha.testable/id)]
@@ -24,21 +44,4 @@
         (-> (update :kaocha.testable/wrap
                     conj
                     (fn [t]
-                      (fn []
-                        (loop [passed? (with-capture-report t)]
-                          (let [attempts (get @current-retries test-id)]
-                            (if passed?
-                              (do (apply te/report @to-report)
-                                  true)
-                                (if (= attempts max-retries)
-                                  (do
-                                    (apply te/report @to-report)
-                                    false)
-                                  (do
-                                    (Thread/sleep wait-time)
-                                    (swap! current-retries
-                                           assoc
-                                           test-id
-                                           (inc attempts))
-
-                                    (recur (with-capture-report t)))))))))))))))
+                      (run-with-retry t test-id))))))))
