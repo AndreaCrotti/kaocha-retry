@@ -2,3 +2,5 @@ simple-testing/.cpcache
 simple-testing/.nrepl-port
 /.cpcache/
 /.nrepl-port
+/pom.xml
+/target/
