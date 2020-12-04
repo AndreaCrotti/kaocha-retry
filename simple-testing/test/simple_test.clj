@@ -5,7 +5,7 @@
   (testing "I pass"
     (is (= 1 1))))
 
-#_(deftest not-working-test
+(deftest not-working-test
   (testing "I do not pass"
     (if (> (Math/random) 0.3)
       (is (= 2 1))

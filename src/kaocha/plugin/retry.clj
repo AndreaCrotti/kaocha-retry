@@ -8,6 +8,12 @@
 (def max-retries 3)
 (def wait-time 100)
 (def current-retries (atom {}))
+(def to-report (atom []))
+
+(defn- with-capture-report [t]
+  (with-redefs [te/report (fn [& args]
+                            (reset! to-report args))]
+    (t)))
 
 (defplugin kaocha.plugin/retry
   (pre-test [testable test-plan]
@@ -19,11 +25,15 @@
                     conj
                     (fn [t]
                       (fn []
-                        (loop [passed? (t)]
+                        (loop [passed? (with-capture-report t)]
                           (let [attempts (get @current-retries test-id)]
-                            (or passed?
+                            (if passed?
+                              (do (apply te/report @to-report)
+                                  true)
                                 (if (= attempts max-retries)
-                                  false
+                                  (do
+                                    (apply te/report @to-report)
+                                    false)
                                   (do
                                     (Thread/sleep wait-time)
                                     (swap! current-retries
@@ -31,4 +41,4 @@
                                            test-id
                                            (inc attempts))
 
-                                    (recur (t)))))))))))))))
+                                    (recur (with-capture-report t)))))))))))))))
