@@ -6,8 +6,8 @@
             [kaocha.hierarchy :as h]))
 
 ;; TODO: make these two configurable
-(def max-retries 3)
-(def wait-time 100)
+(def default-max-retries 3)
+(def default-wait-time 100)
 (def current-retries (atom {}))
 (def to-report (atom []))
 
@@ -16,17 +16,15 @@
                             (reset! to-report args))]
     (t)))
 
-(defn run-with-retry [t test-id]
+(defn run-with-retry [max-retries wait-time t test-id]
   (fn []
     (loop [passed? (with-capture-report t)]
-      (let [attempts (get @current-retries test-id)]
+      (let [attempts (get @current-retries test-id)
+            report #(apply te/report @to-report)]
         (if passed?
-          (do (apply te/report @to-report)
-              true)
+          (do (report) true)
           (if (= attempts max-retries)
-            (do
-              (apply te/report @to-report)
-              false)
+            (do (report) false)
             (do
               (Thread/sleep wait-time)
               (swap! current-retries
@@ -38,11 +36,16 @@
 
 (defplugin kaocha.plugin/retry
   (pre-test [testable test-plan]
-    (let [test-id (-> testable :kaocha.testable/id)]
-      (swap! current-retries assoc test-id 0)
-      (cond-> testable
-        (h/leaf? testable)
-        (-> (update :kaocha.testable/wrap
-                    conj
-                    (fn [t]
-                      (run-with-retry t test-id))))))))
+   (let [max-retries (::retry-max-tries test-plan 3)
+         wait-time (::retry-wait-time test-plan default-wait-time)
+         test-id (:kaocha.testable/id testable)]
+     (swap! current-retries assoc test-id 0)
+     (cond-> testable
+       (h/leaf? testable)
+       (-> (update :kaocha.testable/wrap
+                   conj
+                   (fn [t]
+                     (run-with-retry max-retries
+                                     wait-time
+                                     t
+                                     test-id))))))))
