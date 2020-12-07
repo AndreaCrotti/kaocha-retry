@@ -7,8 +7,9 @@
 
 (def default-max-retries 3)
 (def default-wait-time 100)
-(def current-retries (atom {}))
 (def to-report (atom nil))
+
+(def current-retries (atom 0))
 
 (defn- with-capture-report [t]
   (with-redefs [te/report (fn [& args]
@@ -19,11 +20,12 @@
   (fn []
     (loop [passed? (with-capture-report t)
            attempts 0]
+      (reset! current-retries attempts)
       (let [report #(apply te/report @to-report)]
         (if passed?
-          (do (report) [attempts true])
+          (do (report) true)
           (if (= attempts max-retries)
-            (do (report) [attempts false])
+            (do (report) false)
             (do
               (Thread/sleep wait-time)
               (recur (with-capture-report t) (inc attempts)))))))))
@@ -35,10 +37,17 @@
     (assoc test-plan ::retries {})
     test-plan)
 
+  (post-test [testable test-plan]
+    (if (h/leaf? testable)
+      (assoc-in testable
+                [::retries (:kaocha.testable/id testable)]
+                @current-retries)
+      testable))
+
   (pre-test [testable test-plan]
+    (reset! current-retries 0)
     (let [max-retries (::retry-max-tries test-plan 3)
-          wait-time (::retry-wait-time test-plan default-wait-time)
-          test-id (:kaocha.testable/id testable)]
+          wait-time (::retry-wait-time test-plan default-wait-time)]
 
       (if (h/leaf? testable)
         (-> (update testable
