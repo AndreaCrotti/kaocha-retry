@@ -5,11 +5,10 @@
             [kaocha.plugin :refer [defplugin]]
             [kaocha.hierarchy :as h]))
 
-;; TODO: make these two configurable
 (def default-max-retries 3)
 (def default-wait-time 100)
 (def current-retries (atom {}))
-(def to-report (atom []))
+(def to-report (atom nil))
 
 (defn- with-capture-report [t]
   (with-redefs [te/report (fn [& args]

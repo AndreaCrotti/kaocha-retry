@@ -1,6 +1,8 @@
 #kaocha/v1
-{:plugins                             [:retry.plugin/retry]
- :capture-output?                     false
+{;; add the plugin globally but enable it on each test scenario
+ :plugins         [:retry.plugin/retry]
+ :capture-output? false
 
- :tests [{:id         :unit
-          :test-paths ["test"]}]}
+ :tests [{:id                  :unit
+          :retry.plugin/retry? true
+          :test-paths          ["test"]}]}
