@@ -1,3 +1,3 @@
 {:deps {kaocha-retry/kaocha-retry {:local/root "../"}
-        ;; kaocha-retry-plugin/kaocha-retry-plugin {:mvn/version "0.2.3"}
+        ;; kaocha-retry/kaocha-retry {:mvn/version "0.2.3"}
         org.clojure/test.check    {:mvn/version "1.0.0"}}}

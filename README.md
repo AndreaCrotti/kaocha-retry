@@ -7,6 +7,6 @@ the reporting to make sure we don't report failed tests.
 
 Add the dependency to your project.clj/deps.edn file with:
 
-[![Clojars Project](https://img.shields.io/clojars/v/kaocha-retry-plugin.svg)](https://clojars.org/kaocha-retry-plugin)
+[![Clojars Project](https://img.shields.io/clojars/v/kaocha-retry.svg)](https://clojars.org/kaocha-retry)
 
-And add `:retry.plugin/retry` to your list of Kaocha plugins.
+And add `:kaocha-retry.plugin/retry` to your list of Kaocha plugins.

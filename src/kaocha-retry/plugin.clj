@@ -1,4 +1,4 @@
-(ns retry.plugin
+(ns kaocha-retry.plugin
   "Instrument/unstrument namespaces with Orchestra, to get validation of function
   arguments and return values based on clojure.spec.alpha."
   (:require [clojure.test :as te]
@@ -33,7 +33,7 @@
 
               (recur (with-capture-report t)))))))))
 
-(defplugin retry.plugin/retry
+(defplugin kaocha-retry.plugin/retry
   (pre-run [test-plan]
     (reset! current-retries {})
     test-plan)
