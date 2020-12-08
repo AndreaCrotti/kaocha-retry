@@ -21,11 +21,13 @@
     (loop [passed? (with-capture-report t)
            attempts 0]
       (reset! current-retries attempts)
-      (let [report #(apply te/report @to-report)]
+      (let [report #(do
+                      (apply te/report @to-report)
+                      %)]
         (if passed?
-          (do (report) true)
+          (report passed?)
           (if (= attempts max-retries)
-            (do (report) false)
+            (report passed?)
             (do
               (Thread/sleep wait-time)
               (recur (with-capture-report t) (inc attempts)))))))))
