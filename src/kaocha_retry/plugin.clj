@@ -33,28 +33,40 @@
               (recur (with-capture-report t) (inc attempts)))))))))
 
 (defplugin kaocha-retry.plugin/retry
+  (cli-config [opts]
+    (conj opts [nil "--[no-]retry" "Retry tests"]))
+
+  (config [config]
+    (let [cli-flag (get-in config [:kaocha/cli-options :retry])]
+      (assoc config ::retry?
+             (if (some? cli-flag)
+               cli-flag
+               ;; should it be off by default instead??
+               (::retry? config true)))))
+
   (pre-run [test-plan]
     ;; propagate the retry? true if needed
     ;; in all the tests?
     (assoc test-plan ::retries {})
     test-plan)
 
-  (post-test [testable test-plan]
-    (if (h/leaf? testable)
-      (assoc-in testable
-                [::retries (:kaocha.testable/id testable)]
-                @current-retries)
-      testable))
-
   (pre-test [testable test-plan]
     (reset! current-retries 0)
+    ;; these two are not actually being fetched correctly
     (let [max-retries (::retry-max-tries test-plan 3)
           wait-time (::retry-wait-time test-plan default-wait-time)]
 
-      (if (h/leaf? testable)
+      (if (and (::retry? test-plan) (h/leaf? testable))
         (-> (update testable
                     :kaocha.testable/wrap
                     conj
                     (fn [t]
                       (run-with-retry max-retries wait-time t))))
-        testable))))
+        testable)))
+
+  (post-test [testable test-plan]
+    (if (h/leaf? testable)
+      (assoc-in testable
+                [::retries (:kaocha.testable/id testable)]
+                @current-retries)
+      testable)))

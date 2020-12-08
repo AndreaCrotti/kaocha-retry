@@ -10,3 +10,5 @@ Add the dependency to your project.clj/deps.edn file with:
 [![Clojars Project](https://img.shields.io/clojars/v/kaocha-retry.svg)](https://clojars.org/kaocha-retry)
 
 And add `:kaocha-retry.plugin/retry` to your list of Kaocha plugins.
+
+Configuration:
