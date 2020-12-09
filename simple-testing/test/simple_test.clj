@@ -4,7 +4,10 @@
 (deftest working-test
   (testing "I pass"
     (is (= 1 1))
-    (is (not= 1 1))))
+    (is (= 1 1))))
+
+(deftest missing-assertion-test
+  (testing "I do not pass"))
 
 (deftest not-working-test
   (testing "I do not pass"

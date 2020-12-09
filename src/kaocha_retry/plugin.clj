@@ -17,19 +17,15 @@
                             (swap! to-report concat args))]
 
     (t)
-    (empty? (filter #(= :fail (:type %)) @to-report))))
+    (empty? (filter h/fail-type? @to-report))))
 
 (defn run-with-retry [max-retries wait-time t]
   (fn []
-    (reset! to-report [])
     (loop [attempts 0]
+      (reset! to-report [])
       (reset! current-retries attempts)
       (let [passed? (with-capture-report t)
-            unique-reports (->> @to-report
-                                (group-by (juxt :file :line))
-                                (map second)
-                                (map first))
-            report #(doseq [tr unique-reports]
+            report #(doseq [tr @to-report]
                       (te/report tr))]
         (if passed?
           (do (report) true)
