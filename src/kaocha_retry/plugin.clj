@@ -8,32 +8,36 @@
 
 (def default-max-retries 3)
 (def default-wait-time 100)
-(def to-report (atom nil))
+(def to-report (atom []))
 
 (def current-retries (atom 0))
 
 (defn- with-capture-report [t]
   (with-redefs [te/report (fn [& args]
-                            (reset! to-report args))]
-    (t)))
+                            (swap! to-report concat args))]
+
+    (t)
+    (empty? (filter #(= :fail (:type %)) @to-report))))
 
 (defn run-with-retry [max-retries wait-time t]
   (fn []
-    (loop [passed? (with-capture-report t)
-           attempts 0]
+    (reset! to-report [])
+    (loop [attempts 0]
       (reset! current-retries attempts)
-      (let [report #(do
-                      (apply te/report @to-report)
-                      %)]
+      (let [passed? (with-capture-report t)
+            unique-reports (->> @to-report
+                                (group-by (juxt :file :line))
+                                (map second)
+                                (map first))
+            report #(doseq [tr unique-reports]
+                      (te/report tr))]
         (if passed?
-          (report passed?)
+          (do (report) true)
           (if (= attempts max-retries)
-            (report passed?)
-            ;;TODO: should we add some exponential back off here
-            ;;potentially?
+            (do (report) false)
             (do
               (Thread/sleep wait-time)
-              (recur (with-capture-report t) (inc attempts)))))))))
+              (recur (inc attempts)))))))))
 
 (defplugin kaocha-retry.plugin/retry
   (cli-config [opts]
