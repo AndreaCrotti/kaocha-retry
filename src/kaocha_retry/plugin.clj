@@ -47,20 +47,6 @@
                ;; should it be off by default instead??
                (::retry? config true)))))
 
-  (post-summary [test-result]
-    (let [retried
-          (->>
-           (for [t (testable/test-seq test-result)
-                 :when (and (::retries t)
-                            (pos? (::retries t)))]
-             {(:kaocha.testable/id t) (::retries t)})
-           (into {}))]
-      (when (seq retried)
-        (println "Some tests had to be retried `n` times:")
-        (doseq [[t-id retries] retried]
-          (println (format "%s: %s" t-id retries))))
-      test-result))
-
   (pre-test [testable test-plan]
     (reset! current-retries 0)
     ;; these two are not actually being fetched correctly
@@ -79,4 +65,16 @@
     (if (h/leaf? testable)
       ;; is this actually accessible somehow later on??
       (assoc testable ::retries @current-retries)
-      testable)))
+      testable))
+
+  (post-summary [test-result]
+    (let [retried
+          (for [t (testable/test-seq test-result)
+                :let [retries (::retries t)]
+                :when (and retries (pos? retries))]
+            [(:kaocha.testable/id t) retries])]
+      (when (seq retried)
+        (println "Some tests had to be retried `n` times:")
+        (doseq [[t-id retries] retried]
+          (println (format "%s: %s" t-id retries))))
+      test-result)))
