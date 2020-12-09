@@ -3,6 +3,7 @@
   arguments and return values based on clojure.spec.alpha."
   (:require [clojure.test :as te]
             [kaocha.plugin :refer [defplugin]]
+            [kaocha.testable :as testable]
             [kaocha.hierarchy :as h]))
 
 (def default-max-retries 3)
@@ -28,6 +29,8 @@
           (report passed?)
           (if (= attempts max-retries)
             (report passed?)
+            ;;TODO: should we add some exponential back off here
+            ;;potentially?
             (do
               (Thread/sleep wait-time)
               (recur (with-capture-report t) (inc attempts)))))))))
@@ -44,11 +47,19 @@
                ;; should it be off by default instead??
                (::retry? config true)))))
 
-  (pre-run [test-plan]
-    ;; propagate the retry? true if needed
-    ;; in all the tests?
-    (assoc test-plan ::retries {})
-    test-plan)
+  (post-summary [test-result]
+    (let [retried
+          (->>
+           (for [t (testable/test-seq test-result)
+                 :when (and (::retries t)
+                            (pos? (::retries t)))]
+             {(:kaocha.testable/id t) (::retries t)})
+           (into {}))]
+      (when (seq retried)
+        (println "Some tests had to be retried `n` times:")
+        (doseq [[t-id retries] retried]
+          (println (format "%s: %s" t-id retries))))
+      test-result))
 
   (pre-test [testable test-plan]
     (reset! current-retries 0)
@@ -66,7 +77,6 @@
 
   (post-test [testable test-plan]
     (if (h/leaf? testable)
-      (assoc-in testable
-                [::retries (:kaocha.testable/id testable)]
-                @current-retries)
+      ;; is this actually accessible somehow later on??
+      (assoc testable ::retries @current-retries)
       testable)))
