@@ -6,14 +6,12 @@
             [kaocha.testable :as testable]
             [kaocha.hierarchy :as h]))
 
-;;TODO: remove the global things
 (def default-max-retries 3)
 (def default-wait-time 100)
-(def to-report (atom []))
 
 (def current-retries (atom 0))
 
-(defn- with-capture-report [t]
+(defn- with-capture-report [t to-report]
   (with-redefs [te/report (fn [& args]
                             (swap! to-report concat args))]
 
@@ -23,9 +21,9 @@
 (defn run-with-retry [t]
   (fn []
     (loop [attempts 0]
-      (reset! to-report [])
       (reset! current-retries attempts)
-      (let [passed? (with-capture-report t)
+      (let [to-report (atom [])
+            passed? (with-capture-report t to-report)
             report #(doseq [tr @to-report]
                       (te/report tr))]
         (if passed?
@@ -76,8 +74,8 @@
 
       (when (seq failed-retry)
         (println (format "Tests that failed even after %s retries" default-max-retries))
-        (doseq [[_ retries] failed-retry]
-          (println (format "- %s" retries))))
+        (doseq [[t-id] failed-retry]
+          (println (format "- %s" t-id))))
 
       (when (seq success-retry)
         (println "Some tests succeeded after retrying `n` times")
