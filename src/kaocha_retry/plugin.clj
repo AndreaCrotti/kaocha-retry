@@ -6,6 +6,7 @@
             [kaocha.testable :as testable]
             [kaocha.hierarchy :as h]))
 
+;;TODO: remove the global things
 (def default-max-retries 3)
 (def default-wait-time 100)
 (def to-report (atom []))
@@ -19,7 +20,7 @@
     (t)
     (empty? (filter h/fail-type? @to-report))))
 
-(defn run-with-retry [max-retries wait-time t]
+(defn run-with-retry [t]
   (fn []
     (loop [attempts 0]
       (reset! to-report [])
@@ -29,10 +30,10 @@
                       (te/report tr))]
         (if passed?
           (do (report) true)
-          (if (= attempts max-retries)
+          (if (= attempts default-max-retries)
             (do (report) false)
             (do
-              (Thread/sleep wait-time)
+              (Thread/sleep default-wait-time)
               (recur (inc attempts)))))))))
 
 (defplugin kaocha-retry.plugin/retry
@@ -50,16 +51,13 @@
   (pre-test [testable test-plan]
     (reset! current-retries 0)
     ;; these two are not actually being fetched correctly
-    (let [max-retries (::retry-max-tries test-plan 3)
-          wait-time (::retry-wait-time test-plan default-wait-time)]
-
-      (if (and (::retry? test-plan) (h/leaf? testable))
-        (-> (update testable
-                    :kaocha.testable/wrap
-                    conj
-                    (fn [t]
-                      (run-with-retry max-retries wait-time t))))
-        testable)))
+    (if (and (::retry? test-plan) (h/leaf? testable))
+      (-> (update testable
+                  :kaocha.testable/wrap
+                  conj
+                  (fn [t]
+                    (run-with-retry t))))
+      testable))
 
   (post-test [testable test-plan]
     (if (h/leaf? testable)
@@ -72,9 +70,18 @@
           (for [t (testable/test-seq test-result)
                 :let [retries (::retries t)]
                 :when (and retries (pos? retries))]
-            [(:kaocha.testable/id t) retries])]
-      (when (seq retried)
-        (println "Some tests had to be retried `n` times:")
-        (doseq [[t-id retries] retried]
+            [(:kaocha.testable/id t) retries])
+          failed-retry (filter #(= (second %) default-max-retries) retried)
+          success-retry (filter #(< (second %) default-max-retries) retried)]
+
+      (when (seq failed-retry)
+        (println (format "Tests that failed even after %s retries" default-max-retries))
+        (doseq [[_ retries] failed-retry]
+          (println (format "- %s" retries))))
+
+      (when (seq success-retry)
+        (println "Some tests succeeded after retrying `n` times")
+        (doseq [[t-id retries] success-retry]
           (println (format "%s: %s" t-id retries))))
+
       test-result)))
