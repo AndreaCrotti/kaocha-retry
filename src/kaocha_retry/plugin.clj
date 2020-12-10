@@ -46,6 +46,7 @@
                ;; should it be off by default instead??
                (::retry? config true)))))
 
+  ;; can I get the retry? config from the config to each testable??
   (pre-test [testable test-plan]
     (reset! current-retries 0)
     ;; these two are not actually being fetched correctly
@@ -58,10 +59,8 @@
       testable))
 
   (post-test [testable test-plan]
-    (if (h/leaf? testable)
-      ;; is this actually accessible somehow later on??
-      (assoc testable ::retries @current-retries)
-      testable))
+    (cond-> testable
+      (pos? @current-retries) (assoc ::retries @current-retries)))
 
   (post-summary [test-result]
     (let [retried
