@@ -10,6 +10,11 @@
   (testing "I do not pass"))
 
 (deftest not-working-test
+  (testing "I throw an exception sometimes"
+    (if (> (Math/random) 0.3)
+      (throw (Exception. "I throw"))
+      (is (= 2 2))))
+
   (testing "I do not pass"
     (if (> (Math/random) 0.3)
       (is (= 2 1))

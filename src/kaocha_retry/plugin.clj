@@ -15,8 +15,10 @@
   (with-redefs [te/report (fn [& args]
                             (swap! to-report concat args))]
 
-    (t)
-    (empty? (filter h/fail-type? @to-report))))
+    (try
+      (t)
+      (empty? (filter h/fail-type? @to-report))
+      (catch Exception e false))))
 
 (defn run-with-retry [t]
   (fn []
