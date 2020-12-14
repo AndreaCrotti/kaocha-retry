@@ -17,21 +17,23 @@
 
     (try
       (t)
-      (empty? (filter h/fail-type? @to-report))
-      (catch Exception e false))))
+      [(empty? (filter h/fail-type? @to-report)) nil]
+      (catch Exception e
+        [false e]))))
 
 (defn run-with-retry [t]
   (fn []
     (loop [attempts 0]
       (reset! current-retries attempts)
       (let [to-report (atom [])
-            passed? (with-capture-report t to-report)
+            [passed? exc] (with-capture-report t to-report)
             report #(doseq [tr @to-report]
                       (te/report tr))]
         (if passed?
           (do (report) true)
           (if (= attempts default-max-retries)
-            (do (report) false)
+            (do (report)
+                (throw exc))
             (do
               (Thread/sleep default-wait-time)
               (recur (inc attempts)))))))))
