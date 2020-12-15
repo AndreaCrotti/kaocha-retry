@@ -38,6 +38,21 @@
               (Thread/sleep default-wait-time)
               (recur (inc attempts)))))))))
 
+(defn format-retries [retried]
+  (let [[success fails]
+        (->> retried
+             (sort-by second)
+             (split-with #(< (second %) default-max-retries)))]
+    (when (seq fails)
+      (println (format "* Tests failed even after %s retries" default-max-retries))
+      (doseq [[t-id] fails]
+        (println (format "- %s" t-id))))
+
+    (when (seq success)
+      (println "* Tests succeeded after retrying `n` times")
+      (doseq [[t-id retries] success]
+        (println (format "- %s: %s" t-id retries))))))
+
 (defplugin kaocha-retry.plugin/retry
   (cli-config [opts]
     (conj opts [nil "--[no-]retry" "Retry tests"]))
@@ -55,11 +70,11 @@
     (reset! current-retries 0)
     ;; these two are not actually being fetched correctly
     (if (and (::retry? test-plan) (h/leaf? testable))
-      (-> (update testable
-                  :kaocha.testable/wrap
-                  conj
-                  (fn [t]
-                    (run-with-retry t))))
+      (update testable
+              :kaocha.testable/wrap
+              conj
+              (fn [t]
+                (run-with-retry t)))
       testable))
 
   (post-test [testable test-plan]
@@ -71,18 +86,6 @@
           (for [t (testable/test-seq test-result)
                 :let [retries (::retries t)]
                 :when (and retries (pos? retries))]
-            [(:kaocha.testable/id t) retries])
-          failed-retry (filter #(= (second %) default-max-retries) retried)
-          success-retry (filter #(< (second %) default-max-retries) retried)]
-
-      (when (seq failed-retry)
-        (println (format "Tests that failed even after %s retries" default-max-retries))
-        (doseq [[t-id] failed-retry]
-          (println (format "- %s" t-id))))
-
-      (when (seq success-retry)
-        (println "Some tests succeeded after retrying `n` times")
-        (doseq [[t-id retries] success-retry]
-          (println (format "%s: %s" t-id retries))))
-
+            [(:kaocha.testable/id t) retries])]
+      (format-retries retried)
       test-result)))
