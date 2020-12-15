@@ -2,9 +2,9 @@
   "Instrument/unstrument namespaces with Orchestra, to get validation of function
   arguments and return values based on clojure.spec.alpha."
   (:require [clojure.test :as te]
+            [kaocha.hierarchy :as h]
             [kaocha.plugin :refer [defplugin]]
-            [kaocha.testable :as testable]
-            [kaocha.hierarchy :as h]))
+            [kaocha.testable :as testable]))
 
 (def default-max-retries 3)
 (def default-wait-time 100)
@@ -21,7 +21,7 @@
       (catch Exception e
         [false e]))))
 
-(defn run-with-retry [t]
+(defn run-with-retry [t max-retries wait-time]
   (fn []
     (loop [attempts 0]
       (reset! current-retries attempts)
@@ -31,11 +31,11 @@
                       (te/report tr))]
         (if passed?
           (do (report) true)
-          (if (= attempts default-max-retries)
+          (if (= attempts max-retries)
             (do (report)
                 (throw exc))
             (do
-              (Thread/sleep default-wait-time)
+              (Thread/sleep wait-time)
               (recur (inc attempts)))))))))
 
 (defn format-retries [retried]
@@ -55,15 +55,28 @@
 
 (defplugin kaocha-retry.plugin/retry
   (cli-config [opts]
-    (conj opts [nil "--[no-]retry" "Retry tests"]))
+    (conj opts
+          [nil "--[no-]retry" "Retry tests"]
+          [nil "--max-retries" "Number of times to retry the tests"
+           :parse-fn #(Integer/parseInt %)]
+          [nil "--retry-interval" "How many milliseconds to wait before retrying"
+           :parse-fn #(Integer/parseInt %)]))
 
   (config [config]
-    (let [cli-flag (get-in config [:kaocha/cli-options :retry])]
-      (assoc config ::retry?
-             (if (some? cli-flag)
-               cli-flag
-               ;; should it be off by default instead??
-               (::retry? config true)))))
+    (let [retry? (get-in config
+                         [:kaocha/cli-options :retry]
+                         true)
+          max-retries (get-in config
+                              [:kaocha/cli-options :max-retries]
+                              default-max-retries)
+          retry-interval (get-in config
+                                 [:kaocha/cli-options :retry-interval]
+                                 default-wait-time)]
+
+      (assoc config
+             ::retry? retry?
+             ::max-retries max-retries
+             ::retry-interval retry-interval)))
 
   ;; can I get the retry? config from the config to each testable??
   (pre-test [testable test-plan]
@@ -74,7 +87,9 @@
               :kaocha.testable/wrap
               conj
               (fn [t]
-                (run-with-retry t)))
+                (run-with-retry t
+                                (::max-retries test-plan)
+                                (::retry-interval test-plan))))
       testable))
 
   (post-test [testable test-plan]

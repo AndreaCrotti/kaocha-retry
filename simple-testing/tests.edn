@@ -2,8 +2,7 @@
 {:plugins    [:kaocha-retry.plugin/retry]
  :capture-output? false
  :tests           [{:id         :unit
-                    :plugins    [:kaocha-retry.plugin/retry]
                     :test-paths ["test"]}
 
                    #_{:id         :unit-no-retry
-                    :test-paths ["test"]}]}
+                      :test-paths ["test"]}]}
