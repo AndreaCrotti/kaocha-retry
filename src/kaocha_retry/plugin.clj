@@ -1,6 +1,5 @@
 (ns kaocha-retry.plugin
-  "Instrument/unstrument namespaces with Orchestra, to get validation of function
-  arguments and return values based on clojure.spec.alpha."
+  "Plugin to retry tests multiple times, useful for flakey tests."
   (:require [clojure.test :as te]
             [kaocha.hierarchy :as h]
             [kaocha.plugin :refer [defplugin]]
