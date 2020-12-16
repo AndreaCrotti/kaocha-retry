@@ -32,3 +32,19 @@ You can also configure the number of retries and the wait interval between runs 
 and:
 
     --retry-interval $RETRY_INTERVAL_IN_MILLISECONDS
+
+### Sample report
+
+After all the tests run you will get a report of the tests that were retried, for example:
+
+    4 tests, 5 assertions, 1 errors, 1 failures.
+    * Tests failed even after 3 retries
+    - :simple-test/not-working-test
+    * Tests succeeded after retrying `n` times
+    - :simple-test/not-working-test-2: 2
+
+## Contributing
+
+If you want to try this plugin out just run [the kaocha script](./simple-testing/kaocha)
+in that simple project.
+It will uses kaocha-retry from your local checkout so you can develop with it easily.
