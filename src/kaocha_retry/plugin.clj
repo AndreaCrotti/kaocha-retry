@@ -38,13 +38,13 @@
               (Thread/sleep wait-time)
               (recur (inc attempts)))))))))
 
-(defn format-retries [retried]
+(defn format-retries [retried max-retries]
   (let [[success fails]
         (->> retried
              (sort-by second)
-             (split-with #(< (second %) default-max-retries)))]
+             (split-with #(< (second %) max-retries)))]
     (when (seq fails)
-      (println (format "* Tests failed even after %s retries" default-max-retries))
+      (println (format "* Tests failed even after %s retries" max-retries))
       (doseq [[t-id] fails]
         (println (format "- %s" t-id))))
 
@@ -54,12 +54,12 @@
         (println (format "- %s: %s" t-id retries))))))
 
 (defplugin kaocha-retry.plugin/retry
-  (cli-config [opts]
+  (cli-options [opts]
     (conj opts
           [nil "--[no-]retry" "Retry tests"]
-          [nil "--max-retries" "Number of times to retry the tests"
+          [nil "--max-retries NUM" "Number of times to retry the tests"
            :parse-fn #(Integer/parseInt %)]
-          [nil "--retry-interval" "How many milliseconds to wait before retrying"
+          [nil "--retry-interval INTERVAL" "How many milliseconds to wait before retrying"
            :parse-fn #(Integer/parseInt %)]))
 
   (config [config]
@@ -100,7 +100,9 @@
     (let [retried
           (for [t (testable/test-seq test-result)
                 :let [retries (::retries t)]
-                :when (and retries (pos? retries))]
+                :when (and retries
+                           (h/leaf? t)
+                           (pos? retries))]
             [(:kaocha.testable/id t) retries])]
-      (format-retries retried)
+      (format-retries retried (::max-retries test-result))
       test-result)))
