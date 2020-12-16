@@ -32,7 +32,9 @@
           (do (report) true)
           (if (= attempts max-retries)
             (do (report)
-                (throw exc))
+                ;; just rethrow the exception
+                (when (some? exc)
+                  (throw exc)))
             (do
               (Thread/sleep wait-time)
               (recur (inc attempts)))))))))
