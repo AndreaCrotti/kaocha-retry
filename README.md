@@ -27,7 +27,7 @@ Otherwise you can just enable it for your own test run with enabling it with:
 
 You can also configure the number of retries and the wait interval between runs with:
 
-    --retries $NUMBER_OF_RETRIES
+    --max-retries $NUMBER_OF_RETRIES
 
 and:
 
