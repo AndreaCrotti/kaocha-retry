@@ -4,3 +4,4 @@ simple-testing/.nrepl-port
 /.nrepl-port
 /pom.xml
 /target/
+/.lsp/

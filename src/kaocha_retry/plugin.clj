@@ -54,6 +54,16 @@
       (doseq [[t-id retries] success]
         (println (format "- %s: %s" t-id retries))))))
 
+(defn should-retry? [test-plan testable]
+  (let [test-name (str (:kaocha.var/name testable))
+        test-regexps (:kaocha-retry.plugin/flakey-tests-regexes test-plan)]
+    (and (::retry? test-plan)
+         (h/leaf? testable)
+         (or (empty? test-regexps)
+             (some some?
+                   (map #(re-find (re-pattern %) test-name)
+                        test-regexps))))))
+
 (defplugin kaocha-retry.plugin/retry
   (cli-options [opts]
     (conj opts
@@ -83,7 +93,7 @@
   (pre-test [testable test-plan]
     (reset! current-retries 0)
     ;; these two are not actually being fetched correctly
-    (if (and (::retry? test-plan) (h/leaf? testable))
+    (if (should-retry? test-plan testable)
       (update testable
               :kaocha.testable/wrap
               conj

@@ -29,3 +29,7 @@
     (if (> (Math/random) 0.6)
       (is (= 2 1))
       (is (= 1 1)))))
+
+(comment
+  (require '[kaocha.repl :as kr])
+  (kr/run))

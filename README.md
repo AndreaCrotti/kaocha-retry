@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/AndreaCrotti/kaocha-retry/tree/main.svg?style=svg)](https://circleci.com/gh/AndreaCrotti/kaocha-retry/tree/main)
+
 # Retry plugin for kaocha
 
 Flakey tests are an issue that affect many people, and they should be

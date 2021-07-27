@@ -1,8 +1,9 @@
 #kaocha/v1
-{:plugins    [:kaocha-retry.plugin/retry]
- :capture-output? false
- :tests           [{:id         :unit
-                    :test-paths ["test"]}
+{:plugins                                  [:kaocha-retry.plugin/retry]
+ :capture-output?                          false
+ :kaocha-retry.plugin/flakey-tests-regexes ["simple-test"]
+ :tests                                    [{:id         :unit
+                                             :test-paths ["test"]}
 
-                   #_{:id         :unit-no-retry
-                      :test-paths ["test"]}]}
+                                            #_{:id         :unit-no-retry
+                                               :test-paths ["test"]}]}

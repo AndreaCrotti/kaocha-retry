@@ -2,7 +2,6 @@
  :test-paths ["test"]
  :paths ["src"]
  :aliases
- {:test {:main-opts ["-m" "kaocha.runner"]}
-  :release
+ {:release
   {:extra-deps {applied-science/deps-library {:mvn/version "0.4.0"}}
    :main-opts ["-m" "applied-science.deps-library"]}}}

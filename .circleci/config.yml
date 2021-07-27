@@ -1,0 +1,19 @@
+version: 2.1
+jobs:
+  test:
+    docker:
+      # specify the version you desire here
+      - image: circleci/clojure:openjdk-11-tools-deps-1.10.0.403
+    working_directory: ~/kaocha-retry
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+
+    steps:
+      - checkout
+      - run: ./kaocha
+
+workflows:
+  build:
+    jobs:
+      - test
