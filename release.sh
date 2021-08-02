@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-rm pom.xml
+rm -f pom.xml
 clj -A:release $@
