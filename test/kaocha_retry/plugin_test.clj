@@ -3,12 +3,16 @@
             [clojure.test :refer [deftest testing is are]]))
 
 (deftest retry-test
-  (testing "should retry"
-    (are [test-plan testable retry?] (= retry? (sut/should-retry? test-plan testable))
-      {:kaocha-retry.plugin/flakey-tests-regexes [], ::sut/retry? true}
-      {:kaocha.var/name "ns/test-name", :kaocha.testable/type :kaocha.testable.type/leaf}
-      true))
+  (testing "retrying works with a leaf testable"
+    (let [testable {:kaocha.var/name "ns/test-name", :kaocha.testable/type :kaocha.testable.type/leaf}]
+      (are [test-plan retry?] (= retry? (sut/should-retry? test-plan testable))
+        ;;with `nil` value everything should be included
+        {:kaocha-retry.plugin/retrying-tests-regexes nil, ::sut/retry? true}
+        true
 
-  (testing "Can report flakey tests")
+        ;; use the full string to specify
+        {:kaocha-retry.plugin/retrying-tests-regexes ["ns/test-name"], ::sut/retry? true}
+        true
 
-  (testing "Passing tests don't get affected"))
+        {:kaocha-retry.plugin/retrying-tests-regexes ["ns/flakey-*"], ::sut/retry? true}
+        false))))

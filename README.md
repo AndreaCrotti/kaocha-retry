@@ -35,6 +35,12 @@ and:
 
     --retry-interval $RETRY_INTERVAL_IN_MILLISECONDS
 
+If you want to narrow down the list of tests that should be actually retried, you can add this configuration in your `tests.edn`:
+
+    :kaocha-retry.plugin/retrying-tests-regexes ["ns/test-*"]
+
+Which is a list of regular expressions that will match both the namespace and the actual test name.
+
 ### Sample report
 
 After all the tests run you will get a report of the tests that were retried, for example:
