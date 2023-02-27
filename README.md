@@ -56,3 +56,7 @@ After all the tests run you will get a report of the tests that were retried, fo
 If you want to try this plugin out just run [the kaocha script](./simple-testing/kaocha)
 in that simple project.
 It will uses kaocha-retry from your local checkout so you can develop with it easily.
+
+## Release
+
+Check the [deps-library documentation](https://github.com/applied-science/deps-library) to understand how to release new versions to clojars, and use the [release.sh script](./release.sh).
