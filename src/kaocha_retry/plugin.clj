@@ -77,14 +77,17 @@
   (config [config]
     (let [retry? (get-in config
                          [:kaocha/cli-options :retry]
-                         true)
+                         (if (contains? config ::retry?)
+                           (::retry? config)
+                           true))
           max-retries (get-in config
                               [:kaocha/cli-options :max-retries]
-                              default-max-retries)
+                              (or (::max-retries config)
+                                  default-max-retries))
           retry-interval (get-in config
                                  [:kaocha/cli-options :retry-interval]
-                                 default-wait-time)]
-
+                                 (or (::retry-interval config)
+                                     default-wait-time))]
       (assoc config
              ::retry? retry?
              ::max-retries max-retries
